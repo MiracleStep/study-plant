@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2024-06-24
  */
 @RestController
-@RequestMapping("/lessions")
+@RequestMapping("/lessons")
 @Api(tags = "我的课程相关接口")
 @RequiredArgsConstructor
 public class LearningLessonController {
