@@ -7,6 +7,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * 用户登录验证拦截器
+ */
 @Slf4j
 public class LoginAuthInterceptor implements HandlerInterceptor {
 

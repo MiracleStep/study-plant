@@ -8,6 +8,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * 用户信息拦截器，保存用户信息到UserContext
+ */
 @Slf4j
 public class UserInfoInterceptor implements HandlerInterceptor {
 
