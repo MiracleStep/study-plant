@@ -34,4 +34,18 @@ public interface ILearningLessonService extends IService<LearningLesson> {
      * @return
      */
     LearningLessonVO queryMyCurrentLesson();
+
+    /**
+     * 查询课程是否有效
+     * @param courseId
+     * @return
+     */
+    Long isLessonValid(Long courseId);
+
+    /**
+     * 查询用户课表中指定课程状态
+     * @param courseId
+     * @return
+     */
+    LearningLessonVO queryLearningRecordByCourse(Long courseId);
 }

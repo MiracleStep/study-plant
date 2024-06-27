@@ -145,4 +145,42 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         vo.setLatestSectionIndex(cataSimpleInfoDTO.getCIndex());
         return vo;
     }
+
+    @Override
+    public Long isLessonValid(Long courseId) {
+        //1.获取当前登录用户id
+        Long userId = UserContext.getUser();
+        //2.查询课表learning_lesson  条件 user_id course_id
+        LearningLesson lesson = this.lambdaQuery()
+                .eq(LearningLesson::getUserId, userId)
+                .eq(LearningLesson::getCourseId, courseId)
+                .one();
+        if (lesson == null) {
+            return null;
+        }
+        //3.校验课程是否过期
+        LocalDateTime expireTime = lesson.getExpireTime();
+        LocalDateTime now = LocalDateTime.now();
+        if (expireTime != null && now.isAfter(expireTime)) {
+            return null;
+        }
+        return lesson.getId();
+    }
+
+    @Override
+    public LearningLessonVO queryLearningRecordByCourse(Long courseId) {
+        //1.获取当前登录用户id
+        Long userId = UserContext.getUser();
+        //2.查询课表learning_lesson  条件 user_id course_id
+        LearningLesson lesson = this.lambdaQuery()
+                .eq(LearningLesson::getUserId, userId)
+                .eq(LearningLesson::getCourseId, courseId)
+                .one();
+        if (lesson == null) {
+            return null;
+        }
+        //3.po 转vo 然后返回
+        LearningLessonVO learningLessonVO = BeanUtils.copyBean(lesson, LearningLessonVO.class);
+        return learningLessonVO;
+    }
 }
