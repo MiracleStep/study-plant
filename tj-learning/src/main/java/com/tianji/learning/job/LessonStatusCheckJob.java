@@ -19,7 +19,7 @@ import java.util.List;
 public class LessonStatusCheckJob {
 
     private final ILearningLessonService lessonService;
-
+    //定时任务
     @Scheduled(cron = "0 * * * * *")//每分钟执行一次 域：秒 分 时 日 月 周 (年)
     public void lessonStatusCheck() {
         //1.查询状态为未过期的课程 不区分用户
