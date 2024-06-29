@@ -1,6 +1,7 @@
 package com.tianji.learning.service;
 
 import com.tianji.api.dto.leanring.LearningLessonDTO;
+import com.tianji.learning.domain.dto.LearningPlanDTO;
 import com.tianji.learning.domain.dto.LearningRecordFormDTO;
 import com.tianji.learning.domain.po.LearningRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -27,4 +28,6 @@ public interface ILearningRecordService extends IService<LearningRecord> {
      * @param dto
      */
     void addLearningRecord(LearningRecordFormDTO dto);
+
+
 }
