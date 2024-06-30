@@ -30,4 +30,9 @@ public interface ILearningRecordService extends IService<LearningRecord> {
     void addLearningRecord(LearningRecordFormDTO dto);
 
 
+    /**
+     * 提交学习记录V2
+     * @param dto
+     */
+    void addLearningRecordV2(LearningRecordFormDTO dto);
 }
