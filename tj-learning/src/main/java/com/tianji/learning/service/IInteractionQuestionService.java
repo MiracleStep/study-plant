@@ -1,8 +1,11 @@
 package com.tianji.learning.service;
 
+import com.tianji.common.domain.dto.PageDTO;
 import com.tianji.learning.domain.dto.QuestionFormDTO;
 import com.tianji.learning.domain.po.InteractionQuestion;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.tianji.learning.domain.query.QuestionPageQuery;
+import com.tianji.learning.domain.vo.QuestionVO;
 
 /**
  * <p>
@@ -26,4 +29,11 @@ public interface IInteractionQuestionService extends IService<InteractionQuestio
      * @param dto
      */
     void updateQuestion(Long id, QuestionFormDTO dto);
+
+    /**
+     * 分页查询互动问题-用户端
+     * @param query
+     * @return
+     */
+    PageDTO<QuestionVO> queryQuestionPage(QuestionPageQuery query);
 }
