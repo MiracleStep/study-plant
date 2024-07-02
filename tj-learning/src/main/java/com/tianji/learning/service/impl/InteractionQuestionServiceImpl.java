@@ -46,6 +46,11 @@ public class InteractionQuestionServiceImpl extends ServiceImpl<InteractionQuest
         if (question == null) {
             throw new BadRequestException("非法参数");
         }
+        //修改只能修改自己的互动问题
+        Long userId = UserContext.getUser();
+        if (!userId.equals(question.getUserId())) {
+            throw new BadRequestException("不能修改别人的互动问题");
+        }
         //2.dto转po
         question.setTitle(dto.getTitle());
         question.setDescription(dto.getDescription());
