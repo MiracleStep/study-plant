@@ -30,7 +30,7 @@ public class CategoryCache {
             return list.stream().collect(Collectors.toMap(CategoryBasicDTO::getId, Function.identity()));
         });
     }
-
+    //根据分类的id集合获取分类的名称
     public String getCategoryNames(List<Long> ids) {
         if (ids == null || ids.size() == 0) {
             return "";
