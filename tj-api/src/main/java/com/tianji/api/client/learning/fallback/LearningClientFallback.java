@@ -5,6 +5,9 @@ import com.tianji.api.dto.leanring.LearningLessonDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.openfeign.FallbackFactory;
 
+/**
+ * LearningClient降级类  Sentinel支持  还需要在shared-feign.yml文件中开启feign对sentinel支持
+ */
 @Slf4j
 public class LearningClientFallback implements FallbackFactory<LearningClient> {
 

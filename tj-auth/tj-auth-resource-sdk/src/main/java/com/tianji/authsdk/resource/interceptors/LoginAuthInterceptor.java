@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 用户登录验证拦截器
+ * 用户登录验证拦截器,登录就放行，未登录就拦截
  */
 @Slf4j
 public class LoginAuthInterceptor implements HandlerInterceptor {

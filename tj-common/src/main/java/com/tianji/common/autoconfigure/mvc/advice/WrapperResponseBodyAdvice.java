@@ -13,6 +13,9 @@ import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
+/**
+ * 对返回结果进行包装的Advice
+ */
 @RestControllerAdvice
 public class WrapperResponseBodyAdvice implements ResponseBodyAdvice<Object> {
     @Override

@@ -21,6 +21,9 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
 
+/**
+ * 全局异常处理器
+ */
 @RestControllerAdvice
 @Slf4j
 public class CommonExceptionAdvice {
