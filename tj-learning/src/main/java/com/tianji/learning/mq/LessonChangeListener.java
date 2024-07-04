@@ -20,6 +20,10 @@ public class LessonChangeListener {
 
     private final ILearningLessonService lessonService;
 
+    /**
+     * 用户下单课程
+     * @param dto
+     */
     @RabbitListener(bindings = @QueueBinding(value = @Queue(value = "learning.lesson.pay.queue", durable = "true"),
             exchange = @Exchange(value = MqConstants.Exchange.ORDER_EXCHANGE, type = ExchangeTypes.TOPIC),
             key = MqConstants.Key.ORDER_PAY_KEY))
