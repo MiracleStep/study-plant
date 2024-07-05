@@ -5,6 +5,7 @@ import com.tianji.remark.domain.po.LikedRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -24,7 +25,14 @@ public interface ILikedRecordService extends IService<LikedRecord> {
     void addLikeRecord(LikeRecordFormDTO dto);
 
     /**
-     * 批量查询点赞状态
+     * 将redis中业务类型下面 某业务的点赞总数取出 发送消息到mq
+     * @param bizType
+     * @param maxBizSize
+     */
+    void readLikedTimesAndSendMessage(String bizType, int maxBizSize);
+
+    /**
+     * 查询当前用户是否点赞了指定的业务
      * @param bizIds
      * @return
      */

@@ -2,6 +2,7 @@ package com.tianji.learning.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.tianji.api.client.remark.RemarkClient;
 import com.tianji.api.client.user.UserClient;
 import com.tianji.api.dto.user.UserDTO;
 import com.tianji.common.domain.dto.PageDTO;
@@ -43,6 +44,7 @@ public class InteractionReplyServiceImpl extends ServiceImpl<InteractionReplyMap
 
     private final InteractionQuestionMapper questionMapper;
     private final UserClient userClient;
+    private final RemarkClient remarkClient;
 
 
     @Override
@@ -126,7 +128,8 @@ public class InteractionReplyServiceImpl extends ServiceImpl<InteractionReplyMap
             userMap = users.stream().collect(Collectors.toMap(UserDTO::getId, u -> u));
         }
         // 3.4.查询用户点赞状态
-//        Set<Long> bizLiked = remarkClient.isBizLiked(answerIds);
+        Set<Long> bizLiked = remarkClient.getLikesStatusByBizIds(new ArrayList<>(answerIds));
+        // 3.5 查询用户点赞数量
         // 4.处理VO
         List<ReplyVO> list = new ArrayList<>(records.size());
         for (InteractionReply r : records) {
@@ -150,7 +153,7 @@ public class InteractionReplyServiceImpl extends ServiceImpl<InteractionReplyMap
                 }
             }
             // 4.4.点赞状态
-//            v.setLiked(bizLiked.contains(r.getId()));
+            v.setLiked(bizLiked.contains(r.getId()));
         }
         return new PageDTO<>(page.getTotal(), page.getPages(), list);
     }

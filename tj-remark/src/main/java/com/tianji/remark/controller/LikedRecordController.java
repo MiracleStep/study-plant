@@ -10,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -33,9 +34,9 @@ public class LikedRecordController {
         likedRecordService.addLikeRecord(dto);
     }
 
-    @ApiOperation("批量查询点赞状态")
+    @ApiOperation("批量查询用户点赞状态")//feign远程调用接口
     @GetMapping("list")
-    public Set<Long> getLikesStatusByBizIds(@RequestParam("bizIds")List<Long> bizIds) {
+    public Set<Long> getLikesStatusByBizIds(@RequestParam("bizIds") List<Long> bizIds) {
         return likedRecordService.getLikesStatusByBizIds(bizIds);
     }
 }

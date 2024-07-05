@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
  * @author mirac
  * @since 2024-07-04
  */
-@Service
+//@Service 已进行改进，参考：LikedRecordRedisServiceImpl实现类
 @Slf4j
 @AllArgsConstructor
 public class LikedRecordServiceImpl extends ServiceImpl<LikedRecordMapper, LikedRecord> implements ILikedRecordService {
@@ -53,7 +54,7 @@ public class LikedRecordServiceImpl extends ServiceImpl<LikedRecordMapper, Liked
                 .likedTimes(totalLikesNum)
                 .build();
         log.debug("发送点赞消息, 消息内容：{}", msg);
-        String routingKey = StringUtils.format(MqConstants.Key.LIKED_TIMES_KEY_TEMPLATE, "QA");
+        String routingKey = StringUtils.format(MqConstants.Key.LIKED_TIMES_KEY_TEMPLATE, dto.getBizType());
         rabbitMqHelper.send(
                 MqConstants.Exchange.LIKE_RECORD_EXCHANGE,
                 routingKey,
@@ -75,6 +76,12 @@ public class LikedRecordServiceImpl extends ServiceImpl<LikedRecordMapper, Liked
                 .list();
         //3.将查询到的bizIds转集合返回
         return recordList.stream().map(LikedRecord::getBizId).collect(Collectors.toSet());
+    }
+
+    //不需要实现
+    @Override
+    public void readLikedTimesAndSendMessage(String bizType, int maxBizSize) {
+        return;
     }
 
     //取消赞
