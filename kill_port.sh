@@ -17,4 +17,12 @@ do
   fi
 done
 
+PID=$(lsof -t -i:10010)
+
+# 如果找到进程ID，则杀死进程
+if [ ! -z "$PID" ]; then
+  echo "Killing process $PID using port $port"
+  kill -9 $PID
+fi
+
 echo "All processes using ports $START_PORT to $END_PORT have been terminated."
