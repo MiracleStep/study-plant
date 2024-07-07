@@ -9,7 +9,9 @@ import org.springframework.context.annotation.Bean;
 
 import java.time.Duration;
 import java.util.Map;
-
+/**
+ * 课程分类的caffeine缓存配置
+ */
 public class CategoryCacheConfig {
     /**
      * 课程分类的caffeine缓存
