@@ -1,9 +1,16 @@
 package com.tianji.learning.controller;
 
 
+import com.tianji.learning.domain.po.PointsBoardSeason;
+import com.tianji.learning.service.IPointsBoardSeasonService;
+import io.swagger.annotations.ApiOperation;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,7 +21,15 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2024-07-05
  */
 @RestController
-@RequestMapping("/points-board-season")
+@RequestMapping("/boards/seasons")
+@RequiredArgsConstructor
 public class PointsBoardSeasonController {
 
+    private final IPointsBoardSeasonService pointsBoardSeasonService;
+
+    @ApiOperation("查询赛季列表")
+    @GetMapping("list")
+    public List<PointsBoardSeason> queryPointsBoardSeasonList() {
+        return pointsBoardSeasonService.list();
+    }
 }
