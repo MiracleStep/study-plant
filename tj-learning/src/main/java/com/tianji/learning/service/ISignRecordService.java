@@ -8,4 +8,10 @@ public interface ISignRecordService {
      * @return
      */
     SignResultVO addSignRecords();
+
+    /**
+     * 查询签到记录
+     * @return
+     */
+    Byte[] querySignRecords();
 }

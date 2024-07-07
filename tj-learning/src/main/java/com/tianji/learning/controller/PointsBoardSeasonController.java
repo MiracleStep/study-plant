@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * <p>
- *  前端控制器
+ *  积分榜赛季前端控制器
  * </p>
  *
  * @author mirac

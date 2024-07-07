@@ -1,11 +1,14 @@
 package com.tianji.learning.service.impl;
 
+import com.tianji.common.autoconfigure.mq.RabbitMqHelper;
+import com.tianji.common.constants.MqConstants;
 import com.tianji.common.exceptions.BizIllegalException;
 import com.tianji.common.utils.CollUtils;
 import com.tianji.common.utils.UserContext;
 import com.tianji.learning.constants.RedisConstants;
 import com.tianji.learning.domain.vo.SignRecordVO;
 import com.tianji.learning.domain.vo.SignResultVO;
+import com.tianji.learning.mq.msg.SignInMessage;
 import com.tianji.learning.service.ISignRecordService;
 import io.swagger.v3.oas.annotations.servers.Server;
 import lombok.AllArgsConstructor;
@@ -20,11 +23,15 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * 签到记录
+ */
 @Slf4j
 @Service
 @AllArgsConstructor
 public class SignRecordServiceImpl implements ISignRecordService {
     private final StringRedisTemplate redisTemplate;
+    private final RabbitMqHelper rabbitMqHelper;
 
     @Override
     public SignResultVO addSignRecords() {
@@ -56,12 +63,42 @@ public class SignRecordServiceImpl implements ISignRecordService {
                rewardPoints = 40;
                break;
        }
-        //#TODO 6.保存积分 （积分还没做）
+        //6.保存积分 发送消息到mq
+        rabbitMqHelper.send(MqConstants.Exchange.LEARNING_EXCHANGE,
+                MqConstants.Key.SIGN_IN,
+                SignInMessage.of(userId, rewardPoints + 1));
         //7.封装vo 然后返回
         SignResultVO vo = new SignResultVO();
         vo.setSignPoints(days);
         vo.setRewardPoints(rewardPoints);
         return vo;
+    }
+
+    @Override
+    public Byte[] querySignRecords() {
+        //1.获取用户id
+        Long userId = UserContext.getUser();
+        //2.拼接key
+        LocalDate now = LocalDate.now();
+        String format = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        String key = RedisConstants.SIGN_RECORD_KEY_PREFIX + userId.toString() + format;
+        //3.利用redis bitfield命令取本月第一天到今天所有的签到记录
+        int dayOfMonth = now.getDayOfMonth();
+        List<Long> bitField = redisTemplate.opsForValue().bitField(key,
+                BitFieldSubCommands.create().get(BitFieldSubCommands.BitFieldType.unsigned(dayOfMonth)).valueAt(0));
+        if (CollUtils.isEmpty(bitField)) {
+            return new Byte[0];
+        }
+        Long num = bitField.get(0);
+        int offset = dayOfMonth - 1;
+        //4.利用与运算和位移封装结构
+        Byte[] arr = new Byte[dayOfMonth];
+        while (offset >= 0) {
+            arr[offset] = (byte) (num & 1);
+            offset--;
+            num >>>= 1;
+        }
+        return arr;
     }
 
     /**
