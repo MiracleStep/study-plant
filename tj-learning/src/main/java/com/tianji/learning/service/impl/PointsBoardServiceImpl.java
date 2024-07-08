@@ -104,7 +104,7 @@ public class PointsBoardServiceImpl extends ServiceImpl<PointsBoardMapper, Point
      * @param pageNo
      * @param pageSize
      */
-    private List<PointsBoard> queryCurrentBoard(String key, Integer pageNo, Integer pageSize) {
+    public List<PointsBoard> queryCurrentBoard(String key, Integer pageNo, Integer pageSize) {
         //1.计算start和stop 分页值
         int start = (pageNo - 1) * pageSize;
         int stop = start + pageSize - 1;
