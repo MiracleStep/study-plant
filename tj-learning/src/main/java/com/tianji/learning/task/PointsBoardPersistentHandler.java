@@ -3,6 +3,7 @@ package com.tianji.learning.task;
 import com.tianji.learning.domain.po.PointsBoardSeason;
 import com.tianji.learning.service.IPointsBoardSeasonService;
 import com.tianji.learning.service.IPointsBoardService;
+import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,8 +24,9 @@ public class PointsBoardPersistentHandler {
     /**
      * 创建上赛季（上个月）榜单表
      */
-    @Scheduled(cron = "0 0 3 1 * ?")//每个月1号凌晨3点执行  单机版定时任务调度
+//    @Scheduled(cron = "0 0 3 1 * ?")//每个月1号凌晨3点执行  单机版定时任务调度
 //    @Scheduled(cron = "0 * * * * ?")
+    @XxlJob("createTableJob")//xxl-job任务名称
     public void createPointsBoardTableOfLastSeason() {
 
         log.debug("创建上赛季榜单表任务执行了");
