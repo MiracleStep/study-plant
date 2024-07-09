@@ -1,16 +1,17 @@
 package com.tianji.promotion.controller;
 
 
+import com.tianji.common.domain.dto.PageDTO;
+import com.tianji.common.domain.query.PageQuery;
 import com.tianji.promotion.domain.dto.CouponFormDTO;
+import com.tianji.promotion.domain.query.CouponQuery;
+import com.tianji.promotion.domain.vo.CouponPageVO;
 import com.tianji.promotion.service.ICouponService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * <p>
@@ -28,10 +29,16 @@ public class CouponController {
 
     private final ICouponService couponService;
 
-
     @ApiOperation("新增优惠卷")
     @PostMapping
     public void saveCoupon(@RequestBody @Validated CouponFormDTO dto) {
         couponService.saveCoupon(dto);
     }
+
+    @ApiOperation("分页查询优惠卷")
+    @GetMapping("page")
+    public PageDTO<CouponPageVO> queryCouponPage(CouponQuery query) {
+        return couponService.queryCouponPage(query);
+    }
+
 }

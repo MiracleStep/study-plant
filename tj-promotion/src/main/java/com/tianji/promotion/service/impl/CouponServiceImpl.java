@@ -1,12 +1,17 @@
 package com.tianji.promotion.service.impl;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.tianji.common.domain.dto.PageDTO;
 import com.tianji.common.exceptions.BadRequestException;
 import com.tianji.common.utils.BeanUtils;
 import com.tianji.common.utils.CollUtils;
+import com.tianji.common.utils.StringUtils;
 import com.tianji.promotion.domain.dto.CouponFormDTO;
 import com.tianji.promotion.domain.po.Coupon;
 import com.tianji.promotion.domain.po.CouponScope;
+import com.tianji.promotion.domain.query.CouponQuery;
+import com.tianji.promotion.domain.vo.CouponPageVO;
 import com.tianji.promotion.mapper.CouponMapper;
 import com.tianji.promotion.service.ICouponScopeService;
 import com.tianji.promotion.service.ICouponService;
@@ -60,5 +65,22 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
                 .map(scope -> new CouponScope().setCouponId(coupon.getId()).setBizId(scope).setType(1))
                 .collect(Collectors.toList());
         couponScopeService.saveBatch(csList);
+    }
+
+    @Override
+    public PageDTO<CouponPageVO> queryCouponPage(CouponQuery query) {
+        //1.分页条件查询优惠卷表 coupon
+        Page<Coupon> page = this.lambdaQuery()
+                .eq(query.getType() != null, Coupon::getDiscountType, query.getType())
+                .eq(query.getStatus() != null, Coupon::getStatus, query.getStatus())
+                .eq(StringUtils.isNotBlank(query.getName()), Coupon::getName, query.getName())
+                .page(query.toMpPageDefaultSortByCreateTimeDesc());
+        List<Coupon> records = page.getRecords();
+        if (CollUtils.isEmpty(records)) {
+            return PageDTO.empty(page);
+        }
+        //2.封装vo返回
+        List<CouponPageVO> voList = BeanUtils.copyList(records, CouponPageVO.class);
+        return PageDTO.of(page, voList);
     }
 }
