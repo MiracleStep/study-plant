@@ -28,7 +28,7 @@ tj:
   swagger:
     enable: true
     enableResponseWrap: true
-    package-path: com.tianji.remark.controller
+    package-path: com.tianji.promotion.controller
   jdbc:
     database: tj_remark
   auth:

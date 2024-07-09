@@ -1,12 +1,12 @@
 server:
-  port: 8090  #端口
+  port: 8102  #端口
   tomcat:
     uri-encoding: UTF-8   #服务编码
 spring:
   profiles:
     active: dev
   application:
-    name: learning-service
+    name: promotion-service
   cloud:
     nacos:
       config:
@@ -30,12 +30,10 @@ tj:
   swagger:
     enable: true
     enableResponseWrap: true
-    package-path: com.tianji.learning.controller
-    contact-url: http://www.itcast.cn/
-    contact-email: zhanghuyi@itcast.cn
+    package-path: com.tianji.promotion.controller
     version: v1.0
   jdbc:
-    database: tj_learning
+    database: tj_promotion
   auth:
     resource:
       enable: true
