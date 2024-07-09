@@ -4,14 +4,17 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tianji.common.domain.dto.PageDTO;
 import com.tianji.common.exceptions.BadRequestException;
+import com.tianji.common.exceptions.BizIllegalException;
 import com.tianji.common.utils.BeanUtils;
 import com.tianji.common.utils.CollUtils;
 import com.tianji.common.utils.StringUtils;
 import com.tianji.promotion.domain.dto.CouponFormDTO;
+import com.tianji.promotion.domain.dto.CouponIssueFormDTO;
 import com.tianji.promotion.domain.po.Coupon;
 import com.tianji.promotion.domain.po.CouponScope;
 import com.tianji.promotion.domain.query.CouponQuery;
 import com.tianji.promotion.domain.vo.CouponPageVO;
+import com.tianji.promotion.enums.CouponStatus;
 import com.tianji.promotion.mapper.CouponMapper;
 import com.tianji.promotion.service.ICouponScopeService;
 import com.tianji.promotion.service.ICouponService;
@@ -19,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -82,5 +86,44 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         //2.封装vo返回
         List<CouponPageVO> voList = BeanUtils.copyList(records, CouponPageVO.class);
         return PageDTO.of(page, voList);
+    }
+
+    @Override
+    public void issueCoupon(CouponIssueFormDTO dto) {
+        //1.校验id
+        if (dto.getId() == null) {
+            throw new BadRequestException("未传入优惠卷id");
+        }
+        //2.校验优惠卷id是否存在
+        Coupon coupon = this.getById(dto.getId());
+        if (coupon == null) {
+            throw new BadRequestException("优惠卷不存在");
+        }
+        //3.校验优惠卷状态 只有待发放和暂停状态的优惠卷才能发放
+        if (coupon.getStatus() != CouponStatus.DRAFT && coupon.getStatus() != CouponStatus.PAUSE) {
+            throw new BizIllegalException("只有待发放和暂停中的优惠卷才能发放");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        //该变量代表优惠卷是否立刻发放
+        boolean isBeginIssue = dto.getIssueBeginTime() == null || !dto.getIssueBeginTime().isAfter(now);
+        //4.修改优惠卷的 领取开始和结束日期 使用有效期开始和结束日 天数 状态
+        //方式1：
+        if (isBeginIssue) {
+            coupon.setIssueBeginTime(dto.getIssueBeginTime() == null ? now : LocalDateTime.now());
+            coupon.setIssueEndTime(dto.getIssueEndTime());
+            coupon.setStatus(CouponStatus.ISSUING);//如果是立刻发放 优惠卷状态需要修改为进行中
+            coupon.setTermDays(dto.getTermDays());
+            coupon.setTermBeginTime(dto.getTermBeginTime());
+            coupon.setTermEndTime(dto.getTermEndTime());
+        } else {
+            coupon.setIssueBeginTime(dto.getIssueBeginTime() == null ? now : LocalDateTime.now());
+            coupon.setIssueEndTime(dto.getIssueEndTime());
+            coupon.setStatus(CouponStatus.UN_ISSUE);//如果不是立刻发放 优惠卷状态需要修改为未开始
+            coupon.setTermDays(dto.getTermDays());
+            coupon.setTermBeginTime(dto.getTermBeginTime());
+            coupon.setTermEndTime(dto.getTermEndTime());
+        }
+        this.updateById(coupon);
+        //5.如果优惠卷的 领取方式为 指定发放，需要生成兑换码
     }
 }
