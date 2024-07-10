@@ -103,7 +103,7 @@ public class CodeUtil {
         long payload = fresh << FRESH_BIT_OFFSET | serialNum;
         // 3.计算校验码/签名
         long checkCode = calcCheckCode(payload, (int) fresh);
-        System.out.println("checkCode = " + checkCode);
+//        System.out.println("checkCode = " + checkCode);
         // 4.payload做大质数异或运算，混淆数据
         payload ^= XOR_TABLE[(int) (checkCode & FRESH_MASK)];
         // 5.拼接兑换码明文: 校验码（14位） + payload（36位）

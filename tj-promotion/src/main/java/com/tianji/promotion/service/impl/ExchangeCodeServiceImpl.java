@@ -8,6 +8,7 @@ import com.tianji.promotion.mapper.ExchangeCodeMapper;
 import com.tianji.promotion.service.IExchangeCodeService;
 import com.tianji.promotion.utils.CodeUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ExchangeCodeServiceImpl extends ServiceImpl<ExchangeCodeMapper, ExchangeCode> implements IExchangeCodeService {
 
     private final StringRedisTemplate redisTemplate;
@@ -33,6 +35,7 @@ public class ExchangeCodeServiceImpl extends ServiceImpl<ExchangeCodeMapper, Exc
     @Override
     @Async("generateExchangeCodeExecutor")//指定自己声明的线程池
     public void asyncgenerateExchangeCode(Coupon coupon) {
+        log.debug("生成兑换码 线程名 {}", Thread.currentThread().getName());
         Integer totalNum = coupon.getTotalNum();//代表优惠卷的发放总数量，也就是需要生成兑换码的总数量
         //方式1：循环兑换码的总数量 循环中单个获取自增id incr 效率不高 不推荐
         //方式2：调用incrby(一下增加num个数) 批量生成兑换码 推荐
