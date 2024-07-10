@@ -15,9 +15,11 @@ import com.tianji.promotion.domain.po.CouponScope;
 import com.tianji.promotion.domain.query.CouponQuery;
 import com.tianji.promotion.domain.vo.CouponPageVO;
 import com.tianji.promotion.enums.CouponStatus;
+import com.tianji.promotion.enums.ObtainType;
 import com.tianji.promotion.mapper.CouponMapper;
 import com.tianji.promotion.service.ICouponScopeService;
 import com.tianji.promotion.service.ICouponService;
+import com.tianji.promotion.service.IExchangeCodeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +41,8 @@ import java.util.stream.Collectors;
 public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> implements ICouponService {
 
     private final ICouponScopeService couponScopeService;
+    private final IExchangeCodeService exchangeCodeService;
+
 
     @Override
     @Transactional
@@ -107,6 +111,7 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         //该变量代表优惠卷是否立刻发放
         boolean isBeginIssue = dto.getIssueBeginTime() == null || !dto.getIssueBeginTime().isAfter(now);
         //4.修改优惠卷的 领取开始和结束日期 使用有效期开始和结束日 天数 状态
+        CouponStatus beforeStatus = coupon.getStatus();
         //方式1：
         if (isBeginIssue) {
             coupon.setIssueBeginTime(dto.getIssueBeginTime() == null ? now : LocalDateTime.now());
@@ -124,6 +129,9 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
             coupon.setTermEndTime(dto.getTermEndTime());
         }
         this.updateById(coupon);
-        //5.如果优惠卷的 领取方式为 指定发放，需要生成兑换码
+        //5.如果优惠卷的 领取方式为指定发放并且优惠卷之前的状态是待发放，需要生成兑换码
+        if (coupon.getObtainWay() == ObtainType.ISSUE && beforeStatus == CouponStatus.DRAFT) {
+            exchangeCodeService.asyncgenerateExchangeCode(coupon);//异步生成兑换码
+        }
     }
 }
