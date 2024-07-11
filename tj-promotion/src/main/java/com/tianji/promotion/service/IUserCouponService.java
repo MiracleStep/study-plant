@@ -1,7 +1,7 @@
 package com.tianji.promotion.service;
 
-import com.tianji.promotion.domain.po.UserCoupon;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.tianji.promotion.domain.po.UserCoupon;
 
 /**
  * <p>
@@ -13,4 +13,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IUserCouponService extends IService<UserCoupon> {
 
+    /**
+     * 领取优惠卷
+     * @param id
+     */
+    void receiveCoupon(Long id);
 }
