@@ -6,12 +6,15 @@ import com.tianji.promotion.domain.dto.CouponFormDTO;
 import com.tianji.promotion.domain.dto.CouponIssueFormDTO;
 import com.tianji.promotion.domain.query.CouponQuery;
 import com.tianji.promotion.domain.vo.CouponPageVO;
+import com.tianji.promotion.domain.vo.CouponVO;
 import com.tianji.promotion.service.ICouponService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * <p>
@@ -45,5 +48,11 @@ public class CouponController {
     @PutMapping("{id}/issue")
     public void issueCoupon(@RequestBody @Validated CouponIssueFormDTO dto) {
         couponService.issueCoupon(dto);
+    }
+
+    @ApiOperation("查询发放中的优惠卷列表")
+    @GetMapping("list")
+    public List<CouponVO> queryIssuingCoupons() {
+        return couponService.queryIssuingCoupons();
     }
 }

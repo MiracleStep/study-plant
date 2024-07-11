@@ -8,24 +8,29 @@ import com.tianji.common.exceptions.BizIllegalException;
 import com.tianji.common.utils.BeanUtils;
 import com.tianji.common.utils.CollUtils;
 import com.tianji.common.utils.StringUtils;
+import com.tianji.common.utils.UserContext;
 import com.tianji.promotion.domain.dto.CouponFormDTO;
 import com.tianji.promotion.domain.dto.CouponIssueFormDTO;
 import com.tianji.promotion.domain.po.Coupon;
 import com.tianji.promotion.domain.po.CouponScope;
+import com.tianji.promotion.domain.po.UserCoupon;
 import com.tianji.promotion.domain.query.CouponQuery;
 import com.tianji.promotion.domain.vo.CouponPageVO;
+import com.tianji.promotion.domain.vo.CouponVO;
 import com.tianji.promotion.enums.CouponStatus;
 import com.tianji.promotion.enums.ObtainType;
+import com.tianji.promotion.enums.UserCouponStatus;
 import com.tianji.promotion.mapper.CouponMapper;
 import com.tianji.promotion.service.ICouponScopeService;
 import com.tianji.promotion.service.ICouponService;
 import com.tianji.promotion.service.IExchangeCodeService;
+import com.tianji.promotion.service.IUserCouponService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +47,7 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
 
     private final ICouponScopeService couponScopeService;
     private final IExchangeCodeService exchangeCodeService;
+    private final IUserCouponService userCouponService;
 
 
     @Override
@@ -133,5 +139,54 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
         if (coupon.getObtainWay() == ObtainType.ISSUE && beforeStatus == CouponStatus.DRAFT) {
             exchangeCodeService.asyncgenerateExchangeCode(coupon);//异步生成兑换码
         }
+    }
+
+    @Override
+    public List<CouponVO> queryIssuingCoupons() {
+        //1.查询db coupon 条件：发放中 手动领取
+        List<Coupon> couponList = this.lambdaQuery()
+                .eq(Coupon::getStatus, CouponStatus.ISSUING)
+                .eq(Coupon::getObtainWay, ObtainType.PUBLIC)
+                .list();
+        if (CollUtils.isEmpty(couponList)) {
+            return CollUtils.emptyList();
+        }
+        //2.查询用户卷表user_coupon 条件当前用户 发放中的优惠卷id
+        Set<Long> couponIds = couponList.stream().map(Coupon::getId).collect(Collectors.toSet());
+        //当前用户，针对正在发放中的优惠卷领取记录
+        List<UserCoupon> list = userCouponService.lambdaQuery()
+                .eq(UserCoupon::getUserId, UserContext.getUser())
+                .in(UserCoupon::getCouponId, couponIds)
+                .list();
+        //2.1统计当前用户 针对每一个卷 的已领数量  key是优惠卷id value是当前登录用户针对该卷已领取数量
+        /*HashMap<Long, Long> issueMap = new HashMap<>();//代表当前用户针对每一个卷 领取数量
+        for (UserCoupon userCoupon : list) {
+            Long num = issueMap.get(userCoupon.getCouponId());//优惠卷的领取数量
+            if (num == null) {
+                issueMap.put(userCoupon.getCouponId(), 1L);
+            } else {
+                issueMap.put(userCoupon.getCouponId(), (long) (num.intValue() + 1));
+            }
+        }*/
+        Map<Long, Long> issueMap = list.stream()
+                .collect(Collectors.groupingBy(UserCoupon::getCouponId, Collectors.counting()));
+        //2.2统计当前用户 针对每一个卷 的已领且未使用的数量  key是优惠卷id  value是当前登录用户针对该卷未使用的数量
+        Map<Long, Long> unuseMap = list.stream()
+                .filter(c -> c.getStatus() == UserCouponStatus.UNUSED)
+                .collect(Collectors.groupingBy(UserCoupon::getCouponId, Collectors.counting()));
+        //2.po转vo返回
+        List<CouponVO> voList = new ArrayList<>();
+        for (Coupon coupon : couponList) {
+            CouponVO vo = BeanUtils.copyBean(coupon, CouponVO.class);
+            //优惠卷还有剩余 （issue_num < total_num） 且 （统计用户卷表user_coupon 取出当前用户已领数量 < user_limit）
+            Long issNum = issueMap.getOrDefault(coupon.getId(), 0L);
+            boolean available = coupon.getIssueNum() < coupon.getTotalNum() && issNum.intValue() < coupon.getUserLimit();
+            vo.setAvailable(available);//是否可以领取 false：已领完
+            //统计用户卷表 user_coupon 取出当前用户已经领取且未使用的卷数量
+            boolean received = unuseMap.getOrDefault(coupon.getId(), 0L) > 0;
+            vo.setReceived(received);//是否可以使用 true: 去使用
+            voList.add(vo);
+        }
+        return voList;
     }
 }
