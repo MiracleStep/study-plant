@@ -33,4 +33,9 @@ public class UserCouponController {
         userCouponService.receiveCoupon(id);
     }
 
+    @ApiOperation("兑换码兑换优惠卷")
+    @PostMapping("/{code}/exchange")
+    public void exchangeCoupon(@PathVariable String code) {
+        userCouponService.exchangeCoupon(code);
+    }
 }

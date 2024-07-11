@@ -99,6 +99,7 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
     }
 
     @Override
+    @Transactional
     public void issueCoupon(CouponIssueFormDTO dto) {
         //1.校验id
         if (dto.getId() == null) {

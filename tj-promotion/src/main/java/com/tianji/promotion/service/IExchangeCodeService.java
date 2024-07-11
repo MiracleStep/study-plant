@@ -19,4 +19,12 @@ public interface IExchangeCodeService extends IService<ExchangeCode> {
      * @param coupon
      */
     void asyncgenerateExchangeCode(Coupon coupon);
+
+    /**
+     * 修改兑换码自增id 对应的offset值
+     * @param serialNum
+     * @param b
+     * @return
+     */
+    boolean updateExchangeCodeMark(long serialNum, boolean flag);
 }
