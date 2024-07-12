@@ -17,6 +17,7 @@ import com.tianji.promotion.service.IUserCouponService;
 import com.tianji.promotion.utils.CodeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +42,6 @@ public class UserCouponServiceImpl extends ServiceImpl<UserCouponMapper, UserCou
     private final IExchangeCodeService exchangeCodeService;
 
     @Override
-    @Transactional
     public void receiveCoupon(Long id) {
         //1.根据id查询优惠卷信息 做相关校验
 
@@ -82,7 +82,16 @@ public class UserCouponServiceImpl extends ServiceImpl<UserCouponMapper, UserCou
         couponMapper.incrIssueNum(id);//#TODO 采用这种方式，后期考虑并发控制
         //3.生成优惠卷
         saveUserCoupon(userId, coupon);*/
-        checkAndCreateUserCoupon(userId, coupon, null);
+        //Long.toString().intern() intern方法是强制从常量池中取字符串。
+        //只要是不同的用户id就不存在锁竞争
+        //userId.toString().intern()
+        synchronized (userId.toString().intern()) {
+            //此处调用是非事务方法调用事务方法，事务会失效，因此需要获取代理对象调用aop增强后事务方法
+            //从aop上下文中 获取当前类的代理对象 代理对象中的
+            IUserCouponService userCouponServiceProxy = (IUserCouponService) AopContext.currentProxy();
+            userCouponServiceProxy.checkAndCreateUserCoupon(userId, coupon, null);
+//                checkAndCreateUserCoupon(userId, coupon, serialNum);
+        }
     }
 
     @Override
@@ -135,29 +144,36 @@ public class UserCouponServiceImpl extends ServiceImpl<UserCouponMapper, UserCou
      * @param userId
      * @param coupon
      */
-    private void checkAndCreateUserCoupon(Long userId, Coupon coupon, Long serialNum) {
+    @Transactional
+    @Override
+    public void checkAndCreateUserCoupon(Long userId, Coupon coupon, Long serialNum) {
         //是否超过每人领取上限
         //获取当前用户 对该优惠 已领数量 user_coupon 条件userId couponId 统计数量
-        Integer count = this.lambdaQuery()
-                .eq(UserCoupon::getUserId, userId)
-                .eq(UserCoupon::getCouponId, coupon.getId())
-                .count();
-        if (coupon != null && count >= coupon.getUserLimit()) {
-            throw new BadRequestException("已达到领取上限");
-        }
-        //2.优惠卷的已发放数量 + 1
-        couponMapper.incrIssueNum(coupon.getId());//#TODO 采用这种方式，后期考虑并发控制
-        //3.生成优惠卷
-        saveUserCoupon(userId, coupon);
-        //4.更新兑换码状态
-        if (serialNum != null) {
-            //修改兑换码的状态
-            exchangeCodeService.lambdaUpdate()
-                    .set(ExchangeCode::getStatus, ExchangeCodeStatus.USED)
-                    .set(ExchangeCode::getUserId, userId)
-                    .eq(ExchangeCode::getId, serialNum)
-                    .update();
-        }
+        //Long.toString().intern() intern方法是强制从常量池中取字符串。
+        //只要是不同的用户id就不存在锁竞争
+//        synchronized (userId.toString().intern()) {
+            Integer count = this.lambdaQuery()
+                    .eq(UserCoupon::getUserId, userId)
+                    .eq(UserCoupon::getCouponId, coupon.getId())
+                    .count();
+            if (coupon != null && count >= coupon.getUserLimit()) {
+                throw new BadRequestException("已达到领取上限");
+            }
+            //2.优惠卷的已发放数量 + 1
+            couponMapper.incrIssueNum(coupon.getId());//#TODO 采用这种方式，后期考虑并发控制
+            //3.生成用户优惠卷
+            saveUserCoupon(userId, coupon);
+            //4.更新兑换码状态
+            if (serialNum != null) {
+                //修改兑换码的状态
+                exchangeCodeService.lambdaUpdate()
+                        .set(ExchangeCode::getStatus, ExchangeCodeStatus.USED)
+                        .set(ExchangeCode::getUserId, userId)
+                        .eq(ExchangeCode::getId, serialNum)
+                        .update();
+            }
+//            throw new BadRequestException("故意报错");
+//        }
     }
 
     //保存用户卷
