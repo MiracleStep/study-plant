@@ -10,17 +10,20 @@ import com.tianji.promotion.domain.po.ExchangeCode;
 import com.tianji.promotion.domain.po.UserCoupon;
 import com.tianji.promotion.enums.CouponStatus;
 import com.tianji.promotion.enums.ExchangeCodeStatus;
+import com.tianji.promotion.enums.MyLockType;
 import com.tianji.promotion.mapper.CouponMapper;
 import com.tianji.promotion.mapper.UserCouponMapper;
 import com.tianji.promotion.service.IExchangeCodeService;
 import com.tianji.promotion.service.IUserCouponService;
 import com.tianji.promotion.utils.CodeUtil;
+import com.tianji.promotion.utils.MyLock;
+import com.tianji.promotion.utils.MyLockStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -33,10 +36,10 @@ import java.time.LocalDateTime;
  * @author mirac
  * @since 2024-07-11
  */
-//@Service //进行优化了 UserCouponRedissonCustomerServiceImpl
+@Service
 @Slf4j
 @RequiredArgsConstructor
-public class UserCouponRedissonServiceImpl extends ServiceImpl<UserCouponMapper, UserCoupon> implements IUserCouponService {
+public class UserCouponRedissonCustonmerServiceImpl extends ServiceImpl<UserCouponMapper, UserCoupon> implements IUserCouponService {
 
     private final CouponMapper couponMapper;
     private final StringRedisTemplate redisTemplate;
@@ -95,19 +98,22 @@ public class UserCouponRedissonServiceImpl extends ServiceImpl<UserCouponMapper,
 ////                checkAndCreateUserCoupon(userId, coupon, serialNum);//这种写法是调用原对象的
 //        }
         //通过redisson来实现分布式锁
-        String key = "lock:coupon:uid:" + userId;
-        RLock lock = redissonClient.getLock(key);
-        try {
-            boolean isLock = lock.tryLock();//不设置时间，开门狗机制会生效，默认失效时间是30秒。
-            if (!isLock) {
-                throw new BizIllegalException("操作太频繁了");
-            }
-            //从aop上下文中 获取当前类的代理对象 代理对象中的
-            IUserCouponService userCouponServiceProxy = (IUserCouponService) AopContext.currentProxy();
-            userCouponServiceProxy.checkAndCreateUserCoupon(userId, coupon, null);
-        } finally {
-            lock.unlock();
-        }
+//        String key = "lock:coupon:uid:" + userId;
+//        RLock lock = redissonClient.getLock(key);
+//        try {
+//            boolean isLock = lock.tryLock();//不设置时间，开门狗机制会生效，默认失效时间是30秒。
+//            if (!isLock) {
+//                throw new BizIllegalException("操作太频繁了");
+//            }
+//            //从aop上下文中 获取当前类的代理对象 代理对象中的
+//            IUserCouponService userCouponServiceProxy = (IUserCouponService) AopContext.currentProxy();
+//            userCouponServiceProxy.checkAndCreateUserCoupon(userId, coupon, null);
+//        } finally {
+//            lock.unlock();
+//        }
+        //从aop上下文中 获取当前类的代理对象 代理对象中的
+        IUserCouponService userCouponServiceProxy = (IUserCouponService) AopContext.currentProxy();
+        userCouponServiceProxy.checkAndCreateUserCoupon(userId, coupon, null);
     }
 
     @Override
@@ -162,6 +168,7 @@ public class UserCouponRedissonServiceImpl extends ServiceImpl<UserCouponMapper,
      */
     @Transactional
     @Override
+    @MyLock(name = "lock:coupon:uid:#{userId}", lockType = MyLockType.RE_ENTRANT_LOCK, lockStrategy = MyLockStrategy.FAIL_FAST)
     public void checkAndCreateUserCoupon(Long userId, Coupon coupon, Long serialNum) {
         //是否超过每人领取上限
         //获取当前用户 对该优惠 已领数量 user_coupon 条件userId couponId 统计数量
