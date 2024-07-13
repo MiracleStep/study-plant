@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -32,7 +31,7 @@ import java.time.LocalDateTime;
  * @author mirac
  * @since 2024-07-11
  */
-@Service
+//@Service //进行优化了 UserCouponRedissonServiceImpl
 @Slf4j
 @RequiredArgsConstructor
 public class UserCouponServiceImpl extends ServiceImpl<UserCouponMapper, UserCoupon> implements IUserCouponService {
@@ -90,7 +89,7 @@ public class UserCouponServiceImpl extends ServiceImpl<UserCouponMapper, UserCou
             //从aop上下文中 获取当前类的代理对象 代理对象中的
             IUserCouponService userCouponServiceProxy = (IUserCouponService) AopContext.currentProxy();
             userCouponServiceProxy.checkAndCreateUserCoupon(userId, coupon, null);
-//                checkAndCreateUserCoupon(userId, coupon, serialNum);
+//                checkAndCreateUserCoupon(userId, coupon, serialNum);//这种写法是调用原对象的
         }
     }
 
