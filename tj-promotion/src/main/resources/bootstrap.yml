@@ -39,3 +39,7 @@ tj:
       enable: true
       excludeLoginPaths:
         - /coupons/list # 放行优惠卷列表-用户端
+  mq:
+    listener:
+      retry:
+        stateless: false

@@ -5,6 +5,7 @@ import com.tianji.common.exceptions.BadRequestException;
 import com.tianji.common.exceptions.BizIllegalException;
 import com.tianji.common.utils.StringUtils;
 import com.tianji.common.utils.UserContext;
+import com.tianji.promotion.domain.dto.UserCouponDTO;
 import com.tianji.promotion.domain.po.Coupon;
 import com.tianji.promotion.domain.po.ExchangeCode;
 import com.tianji.promotion.domain.po.UserCoupon;
@@ -176,7 +177,7 @@ public class UserCouponRedissonServiceImpl extends ServiceImpl<UserCouponMapper,
                 throw new BadRequestException("已达到领取上限");
             }
             //2.优惠卷的已发放数量 + 1
-            couponMapper.incrIssueNum(coupon.getId());//#TODO 采用这种方式，后期考虑并发控制
+            couponMapper.incrIssueNum(coupon.getId());
             //3.生成用户优惠卷
             saveUserCoupon(userId, coupon);
             //4.更新兑换码状态
@@ -190,6 +191,11 @@ public class UserCouponRedissonServiceImpl extends ServiceImpl<UserCouponMapper,
             }
 //            throw new BadRequestException("故意报错");
 //        }
+    }
+
+    @Override
+    public void checkAndCreateUserCouponNew(UserCouponDTO msg) {
+        return;
     }
 
     //保存用户卷

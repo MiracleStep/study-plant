@@ -5,6 +5,7 @@ import com.tianji.common.exceptions.BadRequestException;
 import com.tianji.common.exceptions.BizIllegalException;
 import com.tianji.common.utils.StringUtils;
 import com.tianji.common.utils.UserContext;
+import com.tianji.promotion.domain.dto.UserCouponDTO;
 import com.tianji.promotion.domain.po.Coupon;
 import com.tianji.promotion.domain.po.ExchangeCode;
 import com.tianji.promotion.domain.po.UserCoupon;
@@ -173,6 +174,11 @@ public class UserCouponServiceImpl extends ServiceImpl<UserCouponMapper, UserCou
             }
 //            throw new BadRequestException("故意报错");
 //        }
+    }
+
+    @Override
+    public void checkAndCreateUserCouponNew(UserCouponDTO msg) {
+
     }
 
     //保存用户卷
