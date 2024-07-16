@@ -1,15 +1,15 @@
 package com.tianji.promotion.controller;
 
 
+import com.tianji.promotion.domain.dto.CouponDiscountDTO;
+import com.tianji.promotion.domain.dto.OrderCourseDTO;
 import com.tianji.promotion.service.IUserCouponService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
 /**
  * <p>
@@ -38,4 +38,18 @@ public class UserCouponController {
     public void exchangeCoupon(@PathVariable String code) {
         userCouponService.exchangeCoupon(code);
     }
+
+    //该方法是给tj-trade服务 远程调用使用的 不会给前端调用
+
+    /**
+     * 查询可用优惠卷方案
+     * @param courses 订单中的课程信息
+     * @return
+     */
+    @ApiOperation("查询可用优惠卷方案")
+    @PostMapping("available")
+    public List<CouponDiscountDTO> findDiscountSolution(@RequestBody List<OrderCourseDTO> courses) {
+        return userCouponService.findDiscountSolution(courses);
+    }
+
 }

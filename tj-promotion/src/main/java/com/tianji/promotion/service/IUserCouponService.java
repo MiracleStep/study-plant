@@ -1,9 +1,13 @@
 package com.tianji.promotion.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.tianji.promotion.domain.dto.CouponDiscountDTO;
+import com.tianji.promotion.domain.dto.OrderCourseDTO;
 import com.tianji.promotion.domain.dto.UserCouponDTO;
 import com.tianji.promotion.domain.po.Coupon;
 import com.tianji.promotion.domain.po.UserCoupon;
+
+import java.util.List;
 
 /**
  * <p>
@@ -32,11 +36,18 @@ public interface IUserCouponService extends IService<UserCoupon> {
      * @param userId
      * @param coupon
      */
-    public void checkAndCreateUserCoupon(Long userId, Coupon coupon, Long serialNum);
+    void checkAndCreateUserCoupon(Long userId, Coupon coupon, Long serialNum);
 
     /**
      * 异步消息队列：校验并生成用户卷
      * @param msg
      */
     void checkAndCreateUserCouponNew(UserCouponDTO msg);
+
+    /**
+     * 查询可用优惠卷方案
+     * @param courses
+     * @return
+     */
+    List<CouponDiscountDTO> findDiscountSolution(List<OrderCourseDTO> courses);
 }

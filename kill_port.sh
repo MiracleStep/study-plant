@@ -2,7 +2,7 @@
 
 # 定义要关闭的端口范围
 START_PORT=8090
-END_PORT=8101
+END_PORT=8102
 
 # 循环遍历端口范围
 for ((port=$START_PORT; port<=$END_PORT; port++))

@@ -5,6 +5,8 @@ import com.tianji.common.exceptions.BadRequestException;
 import com.tianji.common.exceptions.BizIllegalException;
 import com.tianji.common.utils.StringUtils;
 import com.tianji.common.utils.UserContext;
+import com.tianji.promotion.domain.dto.CouponDiscountDTO;
+import com.tianji.promotion.domain.dto.OrderCourseDTO;
 import com.tianji.promotion.domain.dto.UserCouponDTO;
 import com.tianji.promotion.domain.po.Coupon;
 import com.tianji.promotion.domain.po.ExchangeCode;
@@ -27,6 +29,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -202,6 +205,12 @@ public class UserCouponRedissonCustonmerServiceImpl extends ServiceImpl<UserCoup
     @Override
     public void checkAndCreateUserCouponNew(UserCouponDTO msg) {
 
+    }
+
+
+    @Override
+    public List<CouponDiscountDTO> findDiscountSolution(List<OrderCourseDTO> courses) {
+        return null;
     }
 
     //保存用户卷
