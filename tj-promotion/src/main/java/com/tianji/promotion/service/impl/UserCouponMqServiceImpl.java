@@ -264,10 +264,6 @@ public class UserCouponMqServiceImpl extends ServiceImpl<UserCouponMapper, UserC
         }
         /**
          * 排列组合
-         * [1664678776523046914, 1664679070791221250]
-         * [1664679070791221250, 1664678776523046914]
-         * [1664678776523046914]
-         * [1664679070791221250]
          */
         List<List<Coupon>> solutions = PermuteUtil.permute(availableCoupons);
         for (Coupon availableCoupon : availableCoupons) {
@@ -278,10 +274,95 @@ public class UserCouponMqServiceImpl extends ServiceImpl<UserCouponMapper, UserC
             List<Long> cids = solution.stream().map(Coupon::getId).collect(Collectors.toList());
             log.debug("{}", cids);
         }
+        /**
+         * 排列组合
+         * [1664678776523046914, 1664679070791221250]
+         * [1664679070791221250, 1664678776523046914]
+         * [1664678776523046914]
+         * [1664679070791221250]
+         */
         //4.计算每一种组合的优惠明细
+        log.debug("开始计算 每一种组合的优惠明细");
+        List<CouponDiscountDTO> dtos = new ArrayList<>();
+        for (List<Coupon> solution : solutions) {
+            CouponDiscountDTO dto = calculateSolutionDiscount(avaMap, courses, solution);
+            log.debug("方案最终优惠 {} 方案中优惠卷使用了 {} 规则 {}", dto.getDiscountAmount(), dto.getIds(), dto.getRules());
+            dtos.add(dto);
+        }
         //5.使用多线程改造第4步 并行计算每一种组合的优惠明细
         //5.筛选最优解
-        return null;
+        return dtos;
+    }
+
+    /**
+     * 计算每一个方案的  优惠信息
+     * @param avaMap 优惠卷及其可用的课程的映射集合
+     * @param courses 订单中所有的课程
+     * @param solution 方案
+     * @return
+     */
+    private CouponDiscountDTO calculateSolutionDiscount(Map<Coupon, List<OrderCourseDTO>> avaMap,
+                                                        List<OrderCourseDTO> courses,
+                                                        List<Coupon> solution) {
+        //1.创建方案结果dto对象
+        CouponDiscountDTO dto = new CouponDiscountDTO();
+        //2.初始化商品id和商品折扣明细的映射，初始折扣明细全都设置为0 设置map结构，key为商品的id，value初始值都为0
+        Map<Long, Integer> detailMap = courses.stream().collect(Collectors.toMap(OrderCourseDTO::getId, orderCourseDTO -> 0));
+        //3.计算该方案的优惠信息
+        //3.1 循环方案中优惠卷
+        for (Coupon coupon : solution) {
+            //3.2 取出该优惠卷对应的可用课程
+            List<OrderCourseDTO> availiableCourses = avaMap.get(coupon);
+            //3.3 计算可用课程的总金额（商品价格 - 该商品的折扣明细）
+            int totalAmount = availiableCourses.stream()
+                    .mapToInt(value -> value.getPrice() - detailMap.get(value.getId())).sum();
+            //3.4 判断优惠卷是否可用
+            Discount discount = DiscountStrategy.getDiscount(coupon.getDiscountType());
+            if (!discount.canUse(totalAmount, coupon)) {
+                continue;//卷不可用，继续处理下一个卷
+            }
+            //3.5 计算该优惠卷使用折扣后的折扣值
+            int discountAmount = discount.calculateDiscount(totalAmount, coupon);
+            //3.6 更新商品的折扣明细 更新到detailMap
+            calculateDetailDiscount(detailMap, availiableCourses, totalAmount, discountAmount);
+            //3.7 累加每一个优惠卷的优惠金额 赋值给方案结果dto对象
+            dto.getIds().add(coupon.getId());//只要执行当前这句话，就意味着这个优惠卷生效了，可以使用
+            dto.getRules().add(discount.getRule(coupon));
+            dto.setDiscountAmount(discountAmount + dto.getDiscountAmount());//累加折扣金额
+        }
+        return dto;
+    }
+
+    /**
+     * 计算商品折扣明细
+     * @param detailMap 商品id和商品的优惠明细
+     * @param availiableCourses 当前优惠卷可用的课程集合
+     * @param totalAmount 可用课程的总金额
+     * @param discountAmount 当前优惠卷能优惠的金额
+     */
+    private void calculateDetailDiscount(Map<Long, Integer> detailMap,
+                                         List<OrderCourseDTO> availiableCourses,
+                                         int totalAmount,
+                                         int discountAmount) {
+        //思路：本方法就是优惠卷在使用后 计算每个商品的折扣明细
+        //规则：前面的商品按比例计算，最后一个商品折扣明细 = 总的优惠金额 - 前面商品优惠的金额
+        //循环可用商品
+        int times = 0;//代表已处理的商品个数
+        int remainDiscount = discountAmount; // 代表剩余的优惠金额
+        for (OrderCourseDTO c : availiableCourses) {
+            times++;
+            int discount = 0;
+            if (times == availiableCourses.size()) {
+                //说明是最后一个课程
+                discount = c.getPrice() - remainDiscount;
+            } else {
+                //前面的课程 按比例
+                discount = c.getPrice() * discountAmount / totalAmount;
+                remainDiscount -= discount;
+            }
+            //将商品的折扣明细添加到 detailMap
+            detailMap.put(c.getId(), discount + detailMap.get(c.getId()));
+        }
     }
 
     /**
