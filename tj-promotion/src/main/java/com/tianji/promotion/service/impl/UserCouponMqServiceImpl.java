@@ -322,7 +322,48 @@ public class UserCouponMqServiceImpl extends ServiceImpl<UserCouponMapper, UserC
         }
 
         //6.筛选最优解
-        return dtos;
+        return findBestSolution(dtos);
+    }
+
+    /**
+     * 求最优解
+     * 用卷相同时，优惠金额最高的方案
+     * 优惠金额相同时，用卷最少的方案
+     * @param
+     * @return
+     */
+    private List<CouponDiscountDTO> findBestSolution(List<CouponDiscountDTO> solutions) {
+        //1.创建两个map 分别记录用卷相同，金额最高 和 金额相同，用卷最少
+        Map<String, CouponDiscountDTO> moreDiscountMap = new HashMap<>();
+        Map<Integer, CouponDiscountDTO> lessCouponMap = new HashMap<>();
+        //2.循环方案 向map中记录
+        for (CouponDiscountDTO solution : solutions) {
+            //2.1对优惠卷id 升序，转字符串 然后以逗号拼接
+            String ids = solution.getIds().stream()
+                    .sorted(Comparator.comparing(Long::longValue))
+                    .map(String::valueOf).collect(Collectors.joining(","));
+
+            //2.2 从moreDiscountMap中取 旧的记录 判断 旧的方案的优惠金额 >= 如果当前方案的优惠金额 当前方案忽略 处理下一个方案
+            CouponDiscountDTO old = moreDiscountMap.get(ids);
+            if (old != null && old.getDiscountAmount() >= solution.getDiscountAmount()) {
+                continue;
+            }
+            //2.3 从lessCouponMap中取 旧的记录 判断 旧的方案用卷数量 <= 如果当前方案用卷数量 当前方案忽略 处理下一个方案
+            old = lessCouponMap.get(solution.getDiscountAmount());
+            if (old != null && solution.getIds().size() > 1 && old.getIds().size() <= solution.getIds().size()) {
+                continue;
+            }
+            //2.4 添加更优方案到map中
+            moreDiscountMap.put(ids, solution);
+            lessCouponMap.put(solution.getDiscountAmount(), solution);
+        }
+        //3.求两个map的交集
+        Collection<CouponDiscountDTO> bestSolution = CollUtils.intersection(moreDiscountMap.values(), lessCouponMap.values());
+        //4.对最终的方案结果，按优惠金额 倒序
+        List<CouponDiscountDTO> latestBestSolution = bestSolution.stream()
+                .sorted(Comparator.comparing(CouponDiscountDTO::getDiscountAmount).reversed())
+                .collect(Collectors.toList());
+        return latestBestSolution;
     }
 
     /**
