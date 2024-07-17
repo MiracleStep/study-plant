@@ -39,10 +39,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -64,6 +67,7 @@ public class UserCouponMqServiceImpl extends ServiceImpl<UserCouponMapper, UserC
     private final RedissonClient redissonClient;
     private final RabbitMqHelper mqHelper;
     private final ICouponScopeService couponScopeService;
+    private final Executor calculteSolutionExecutor;
 
     @Override
     //分布式锁可以对优惠卷id加锁
@@ -282,15 +286,42 @@ public class UserCouponMqServiceImpl extends ServiceImpl<UserCouponMapper, UserC
          * [1664679070791221250]
          */
         //4.计算每一种组合的优惠明细
-        log.debug("开始计算 每一种组合的优惠明细");
-        List<CouponDiscountDTO> dtos = new ArrayList<>();
-        for (List<Coupon> solution : solutions) {
-            CouponDiscountDTO dto = calculateSolutionDiscount(avaMap, courses, solution);
-            log.debug("方案最终优惠 {} 方案中优惠卷使用了 {} 规则 {}", dto.getDiscountAmount(), dto.getIds(), dto.getRules());
-            dtos.add(dto);
-        }
+//        log.debug("开始计算 每一种组合的优惠明细");
+//        List<CouponDiscountDTO> dtos = new ArrayList<>();
+//        for (List<Coupon> solution : solutions) {
+//            CouponDiscountDTO dto = calculateSolutionDiscount(avaMap, courses, solution);
+//            log.debug("方案最终优惠 {} 方案中优惠卷使用了 {} 规则 {}", dto.getDiscountAmount(), dto.getIds(), dto.getRules());
+//            dtos.add(dto);
+//        }
         //5.使用多线程改造第4步 并行计算每一种组合的优惠明细
-        //5.筛选最优解
+        log.debug("多线程计算 每一种组合的优惠明细");
+//        List<CouponDiscountDTO> dtos = new ArrayList<>();//线程不安全的
+        List<CouponDiscountDTO> dtos = Collections.synchronizedList(new ArrayList<>());
+        CountDownLatch latch = new CountDownLatch(solutions.size());
+        for (List<Coupon> solution : solutions) {
+            CompletableFuture.supplyAsync(new Supplier<CouponDiscountDTO>() {
+                @Override
+                public CouponDiscountDTO get() {
+                    CouponDiscountDTO dto = calculateSolutionDiscount(avaMap, courses, solution);
+                    return dto;
+                }
+            }).thenAccept(new Consumer<CouponDiscountDTO>() {
+                @Override
+                public void accept(CouponDiscountDTO dto) {
+                    log.debug("方案最终优惠 {} 方案中优惠卷使用了 {} 规则 {}", dto.getDiscountAmount(), dto.getIds(), dto.getRules());
+                    dtos.add(dto);
+                    latch.countDown();//计数器减一。
+                }
+            });
+        }
+
+        try {
+            latch.await(2, TimeUnit.SECONDS);//主线程最多阻塞等待2秒
+        } catch (InterruptedException e) {
+            log.error("多线程计算组合优惠明细 报错了", e);
+        }
+
+        //6.筛选最优解
         return dtos;
     }
 
