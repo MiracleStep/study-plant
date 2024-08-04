@@ -95,7 +95,7 @@ public class LearningRecordDelayTaskHandler {
         // 1.添加数据到Redis缓存
         writeRecordCache(record);
         // 2.提交延迟任务到延迟队列 DelayQueue
-        queue.add(new DelayTask<>(new RecordTaskData(record), Duration.ofSeconds(20)));
+        queue.add(new DelayTask<>(new RecordTaskData(record), Duration.ofSeconds(25)));
     }
 
     /**

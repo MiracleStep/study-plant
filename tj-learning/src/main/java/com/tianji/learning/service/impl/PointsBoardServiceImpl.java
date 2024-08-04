@@ -56,7 +56,7 @@ public class PointsBoardServiceImpl extends ServiceImpl<PointsBoardMapper, Point
         if (isCurrent) {
             board = queryMyCurrentBoard(key);
         } else {
-            //#TODO
+            //#TODO 查询历史赛季积分和排名
             board = queryMyHistoryBoard(season);
         }
         //4.分页查询赛季列表  根据query.season 判断是查redis还是db

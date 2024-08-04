@@ -6,6 +6,7 @@ import com.tianji.common.exceptions.BizIllegalException;
 import com.tianji.common.utils.StringUtils;
 import com.tianji.common.utils.UserContext;
 import com.tianji.promotion.domain.dto.CouponDiscountDTO;
+import com.tianji.promotion.domain.dto.OrderCouponDTO;
 import com.tianji.promotion.domain.dto.OrderCourseDTO;
 import com.tianji.promotion.domain.dto.UserCouponDTO;
 import com.tianji.promotion.domain.po.Coupon;
@@ -31,7 +32,7 @@ import java.util.List;
 
 /**
  * <p>
- * 用户领取优惠券的记录，是真正使用的优惠券信息 服务实现类
+ * 用户优惠卷-分布式锁版本
  * </p>
  *
  * @author mirac
@@ -77,27 +78,6 @@ public class UserCouponRedissonServiceImpl extends ServiceImpl<UserCouponMapper,
         //是否超过每人领取上限
         //获取当前用户 对该优惠 已领数量 user_coupon 条件userId couponId 统计数量
         Long userId = UserContext.getUser();
-        /*Integer count = this.lambdaQuery()
-                .eq(UserCoupon::getUserId, userId)
-                .eq(UserCoupon::getCouponId, coupon.getId())
-                .count();
-        if (coupon != null && count >= coupon.getUserLimit()) {
-            throw new BadRequestException("已达到领取上限");
-        }
-        //2.优惠卷的已发放数量 + 1
-        couponMapper.incrIssueNum(id);//#TODO 采用这种方式，后期考虑并发控制
-        //3.生成优惠卷
-        saveUserCoupon(userId, coupon);*/
-        //Long.toString().intern() intern方法是强制从常量池中取字符串。
-        //只要是不同的用户id就不存在锁竞争
-        //userId.toString().intern()
-//        synchronized (userId.toString().intern()) {
-//            //此处调用是非事务方法调用事务方法，事务会失效，因此需要获取代理对象调用aop增强后事务方法
-//            //从aop上下文中 获取当前类的代理对象 代理对象中的
-//            IUserCouponService userCouponServiceProxy = (IUserCouponService) AopContext.currentProxy();
-//            userCouponServiceProxy.checkAndCreateUserCoupon(userId, coupon, null);
-////                checkAndCreateUserCoupon(userId, coupon, serialNum);//这种写法是调用原对象的
-//        }
         //通过redisson来实现分布式锁
         String key = "lock:coupon:uid:" + userId;
         RLock lock = redissonClient.getLock(key);
@@ -203,6 +183,11 @@ public class UserCouponRedissonServiceImpl extends ServiceImpl<UserCouponMapper,
 
     @Override
     public List<CouponDiscountDTO> findDiscountSolution(List<OrderCourseDTO> courses) {
+        return null;
+    }
+
+    @Override
+    public CouponDiscountDTO queryDiscountDetailByOrder(OrderCouponDTO orderCouponDTO) {
         return null;
     }
 

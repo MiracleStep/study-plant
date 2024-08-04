@@ -1,5 +1,6 @@
 package com.tianji.learning.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tianji.api.client.course.CourseClient;
 import com.tianji.api.dto.course.CourseFullInfoDTO;
 import com.tianji.api.dto.leanring.LearningLessonDTO;
@@ -8,7 +9,6 @@ import com.tianji.common.exceptions.BizIllegalException;
 import com.tianji.common.exceptions.DbException;
 import com.tianji.common.utils.BeanUtils;
 import com.tianji.common.utils.UserContext;
-import com.tianji.learning.domain.dto.LearningPlanDTO;
 import com.tianji.learning.domain.dto.LearningRecordFormDTO;
 import com.tianji.learning.domain.po.LearningLesson;
 import com.tianji.learning.domain.po.LearningRecord;
@@ -17,7 +17,6 @@ import com.tianji.learning.enums.SectionType;
 import com.tianji.learning.mapper.LearningRecordMapper;
 import com.tianji.learning.service.ILearningLessonService;
 import com.tianji.learning.service.ILearningRecordService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tianji.learning.utils.LearningRecordDelayTaskHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -111,11 +110,6 @@ public class LearningRecordServiceImpl extends ServiceImpl<LearningRecordMapper,
     private boolean handleVideoRecordV2(Long userId, LearningRecordFormDTO dto) {
         //1.查询旧的播放记录 learning_record 条件lesson_id 和 userId
         LearningRecord learningRecord = queryOldRecordV2(dto.getLessonId(), dto.getSectionId());
-//        LearningRecord learningRecord = this.lambdaQuery()
-//                .eq(LearningRecord::getUserId, userId)
-//                .eq(LearningRecord::getLessonId, dto.getLessonId())
-//                .eq(LearningRecord::getSectionId, dto.getSectionId())
-//                .one();
 
         //2.判断是否存在
         if (learningRecord == null) {
@@ -126,7 +120,7 @@ public class LearningRecordServiceImpl extends ServiceImpl<LearningRecordMapper,
             //2.保存学习记录learning_record
             boolean result = this.save(record);
             if (!result) {
-                throw new DbException("新增考试记录失败");
+                throw new DbException("新增学习记录失败");
             }
             return false;//代表本小节没有学完
         }

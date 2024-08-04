@@ -2,6 +2,7 @@ package com.tianji.api.client.promotion.fallback;
 
 import com.tianji.api.client.promotion.PromotionClient;
 import com.tianji.api.dto.promotion.CouponDiscountDTO;
+import com.tianji.api.dto.promotion.OrderCouponDTO;
 import com.tianji.api.dto.promotion.OrderCourseDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.openfeign.FallbackFactory;
@@ -16,6 +17,11 @@ public class PromotionFallback implements FallbackFactory<PromotionClient> {
         return new PromotionClient() {
             @Override
             public List<CouponDiscountDTO> findDiscountSolution(List<OrderCourseDTO> courses) {
+                return null;
+            }
+
+            @Override
+            public CouponDiscountDTO queryDiscountDetailByOrder(OrderCouponDTO orderCouponDTO) {
                 return null;
             }
         };

@@ -2,6 +2,7 @@ package com.tianji.promotion.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.tianji.promotion.domain.dto.CouponDiscountDTO;
+import com.tianji.promotion.domain.dto.OrderCouponDTO;
 import com.tianji.promotion.domain.dto.OrderCourseDTO;
 import com.tianji.promotion.domain.dto.UserCouponDTO;
 import com.tianji.promotion.domain.po.Coupon;
@@ -50,4 +51,11 @@ public interface IUserCouponService extends IService<UserCoupon> {
      * @return
      */
     List<CouponDiscountDTO> findDiscountSolution(List<OrderCourseDTO> courses);
+
+    /**
+     * 计算订单优惠明细
+     * @param orderCouponDTO
+     * @return
+     */
+    CouponDiscountDTO queryDiscountDetailByOrder(OrderCouponDTO orderCouponDTO);
 }

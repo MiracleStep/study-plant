@@ -12,8 +12,8 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -41,7 +41,6 @@ public class PointsBoardPersistentHandler {
 //    @Scheduled(cron = "0 * * * * ?")
     @XxlJob("createTableJob")//xxl-job任务名称
     public void createPointsBoardTableOfLastSeason() {
-
         log.debug("创建上赛季榜单表任务执行了");
         //1.获取上个月当前时间点
         LocalDate time = LocalDate.now().minusMonths(1);

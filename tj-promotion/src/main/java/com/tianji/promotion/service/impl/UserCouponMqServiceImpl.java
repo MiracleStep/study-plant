@@ -14,6 +14,7 @@ import com.tianji.promotion.constants.PromotionConstants;
 import com.tianji.promotion.discount.Discount;
 import com.tianji.promotion.discount.DiscountStrategy;
 import com.tianji.promotion.domain.dto.CouponDiscountDTO;
+import com.tianji.promotion.domain.dto.OrderCouponDTO;
 import com.tianji.promotion.domain.dto.OrderCourseDTO;
 import com.tianji.promotion.domain.dto.UserCouponDTO;
 import com.tianji.promotion.domain.po.Coupon;
@@ -22,6 +23,7 @@ import com.tianji.promotion.domain.po.ExchangeCode;
 import com.tianji.promotion.domain.po.UserCoupon;
 import com.tianji.promotion.enums.ExchangeCodeStatus;
 import com.tianji.promotion.enums.MyLockType;
+import com.tianji.promotion.enums.UserCouponStatus;
 import com.tianji.promotion.mapper.CouponMapper;
 import com.tianji.promotion.mapper.UserCouponMapper;
 import com.tianji.promotion.service.ICouponScopeService;
@@ -50,7 +52,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * 用户领取优惠券的记录，是真正使用的优惠券信息 服务实现类
+ * 用户优惠卷-MQ版本 最新版本
  * </p>
  *
  * @author mirac
@@ -305,7 +307,7 @@ public class UserCouponMqServiceImpl extends ServiceImpl<UserCouponMapper, UserC
                     CouponDiscountDTO dto = calculateSolutionDiscount(avaMap, courses, solution);
                     return dto;
                 }
-            }).thenAccept(new Consumer<CouponDiscountDTO>() {
+            }, calculteSolutionExecutor).thenAccept(new Consumer<CouponDiscountDTO>() {
                 @Override
                 public void accept(CouponDiscountDTO dto) {
                     log.debug("方案最终优惠 {} 方案中优惠卷使用了 {} 规则 {}", dto.getDiscountAmount(), dto.getIds(), dto.getRules());
@@ -323,6 +325,23 @@ public class UserCouponMqServiceImpl extends ServiceImpl<UserCouponMapper, UserC
 
         //6.筛选最优解
         return findBestSolution(dtos);
+    }
+
+    @Override
+    public CouponDiscountDTO queryDiscountDetailByOrder(OrderCouponDTO orderCouponDTO) {
+        // 1.查询用户优惠券
+        List<Long> userCouponIds = orderCouponDTO.getUserCouponIds();
+        List<Coupon> coupons = baseMapper.queryCouponByUserCouponIds(userCouponIds, UserCouponStatus.UNUSED);
+        if (CollUtils.isEmpty(coupons)) {
+            return null;
+        }
+        // 2.查询优惠券对应课程
+        Map<Coupon, List<OrderCourseDTO>> availableCouponMap = findAvailableCoupons(coupons, orderCouponDTO.getCourseList());
+        if (CollUtils.isEmpty(availableCouponMap)) {
+            return null;
+        }
+        // 3.查询优惠券规则
+        return calculateSolutionDiscount(availableCouponMap, orderCouponDTO.getCourseList(), coupons);
     }
 
     /**
@@ -380,6 +399,7 @@ public class UserCouponMqServiceImpl extends ServiceImpl<UserCouponMapper, UserC
         CouponDiscountDTO dto = new CouponDiscountDTO();
         //2.初始化商品id和商品折扣明细的映射，初始折扣明细全都设置为0 设置map结构，key为商品的id，value初始值都为0
         Map<Long, Integer> detailMap = courses.stream().collect(Collectors.toMap(OrderCourseDTO::getId, orderCourseDTO -> 0));
+        dto.setDiscountDetail(detailMap);
         //3.计算该方案的优惠信息
         //3.1 循环方案中优惠卷
         for (Coupon coupon : solution) {

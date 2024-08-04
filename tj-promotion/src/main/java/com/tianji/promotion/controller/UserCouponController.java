@@ -2,6 +2,7 @@ package com.tianji.promotion.controller;
 
 
 import com.tianji.promotion.domain.dto.CouponDiscountDTO;
+import com.tianji.promotion.domain.dto.OrderCouponDTO;
 import com.tianji.promotion.domain.dto.OrderCourseDTO;
 import com.tianji.promotion.service.IUserCouponService;
 import io.swagger.annotations.Api;
@@ -13,7 +14,7 @@ import java.util.List;
 
 /**
  * <p>
- * 用户领取优惠券的记录，是真正使用的优惠券信息 前端控制器
+ * 用户优惠卷 前端控制器
  * </p>
  *
  * @author mirac
@@ -40,16 +41,26 @@ public class UserCouponController {
     }
 
     //该方法是给tj-trade服务 远程调用使用的 不会给前端调用
-
     /**
      * 查询可用优惠卷方案
      * @param courses 订单中的课程信息
      * @return
      */
     @ApiOperation("查询可用优惠卷方案")
-    @PostMapping("available")
+    @PostMapping("/available")
     public List<CouponDiscountDTO> findDiscountSolution(@RequestBody List<OrderCourseDTO> courses) {
         return userCouponService.findDiscountSolution(courses);
     }
 
+    /**
+     * 根据卷方案计算订单优惠明细（tj-trade调用）
+     * @param orderCouponDTO
+     * @return
+     */
+    @ApiOperation("根据券方案计算订单优惠明细")
+    @PostMapping("/discount")
+    public CouponDiscountDTO queryDiscountDetailByOrder(
+            @RequestBody OrderCouponDTO orderCouponDTO){
+        return userCouponService.queryDiscountDetailByOrder(orderCouponDTO);
+    }
 }

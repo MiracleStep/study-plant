@@ -6,6 +6,7 @@ import com.tianji.common.exceptions.BizIllegalException;
 import com.tianji.common.utils.StringUtils;
 import com.tianji.common.utils.UserContext;
 import com.tianji.promotion.domain.dto.CouponDiscountDTO;
+import com.tianji.promotion.domain.dto.OrderCouponDTO;
 import com.tianji.promotion.domain.dto.OrderCourseDTO;
 import com.tianji.promotion.domain.dto.UserCouponDTO;
 import com.tianji.promotion.domain.po.Coupon;
@@ -33,7 +34,7 @@ import java.util.List;
 
 /**
  * <p>
- * 用户领取优惠券的记录，是真正使用的优惠券信息 服务实现类
+ * 用户优惠卷-注解实现通用分布式锁
  * </p>
  *
  * @author mirac
@@ -210,6 +211,11 @@ public class UserCouponRedissonCustonmerServiceImpl extends ServiceImpl<UserCoup
 
     @Override
     public List<CouponDiscountDTO> findDiscountSolution(List<OrderCourseDTO> courses) {
+        return null;
+    }
+
+    @Override
+    public CouponDiscountDTO queryDiscountDetailByOrder(OrderCouponDTO orderCouponDTO) {
         return null;
     }
 
