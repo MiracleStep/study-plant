@@ -80,8 +80,6 @@ public class UserCouponMqServiceImpl extends ServiceImpl<UserCouponMapper, UserC
         if (id == null) {
             throw new BadRequestException("非法参数");
         }
-        //从数据库获取优惠卷信息
-//        Coupon coupon = couponMapper.selectById(id);
         // 从redis中获取优惠卷信息
         Coupon coupon = queryCouponByCache(id);
         if (coupon == null) {

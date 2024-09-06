@@ -51,7 +51,6 @@ public class UserCouponRedissonServiceImpl extends ServiceImpl<UserCouponMapper,
     @Override
     public void receiveCoupon(Long id) {
         //1.根据id查询优惠卷信息 做相关校验
-
         //优惠卷是否存在
         if (id == null) {
             throw new BadRequestException("非法参数");
@@ -78,6 +77,16 @@ public class UserCouponRedissonServiceImpl extends ServiceImpl<UserCouponMapper,
         //是否超过每人领取上限
         //获取当前用户 对该优惠 已领数量 user_coupon 条件userId couponId 统计数量
         Long userId = UserContext.getUser();
+        Integer count = this.lambdaQuery()
+                .eq(UserCoupon::getUserId, userId)
+                .eq(UserCoupon::getCouponId, coupon.getId())
+                .count();
+        if (coupon != null && count >= coupon.getUserLimit()) {
+            throw new BadRequestException("已达到领取上限");
+        }
+        //上面这些可以用缓存实现，来进一步提高并发能力，一致性采用监听binlog来实现最终一致性
+        //或者使用异步领劵方案。
+
         //通过redisson来实现分布式锁
         String key = "lock:coupon:uid:" + userId;
         RLock lock = redissonClient.getLock(key);
@@ -151,29 +160,26 @@ public class UserCouponRedissonServiceImpl extends ServiceImpl<UserCouponMapper,
         //获取当前用户 对该优惠 已领数量 user_coupon 条件userId couponId 统计数量
         //Long.toString().intern() intern方法是强制从常量池中取字符串。
         //只要是不同的用户id就不存在锁竞争
-//        synchronized (userId.toString().intern()) {
-            Integer count = this.lambdaQuery()
-                    .eq(UserCoupon::getUserId, userId)
-                    .eq(UserCoupon::getCouponId, coupon.getId())
-                    .count();
-            if (coupon != null && count >= coupon.getUserLimit()) {
-                throw new BadRequestException("已达到领取上限");
-            }
-            //2.优惠卷的已发放数量 + 1
-            couponMapper.incrIssueNum(coupon.getId());
-            //3.生成用户优惠卷
-            saveUserCoupon(userId, coupon);
-            //4.更新兑换码状态
-            if (serialNum != null) {
-                //修改兑换码的状态
-                exchangeCodeService.lambdaUpdate()
-                        .set(ExchangeCode::getStatus, ExchangeCodeStatus.USED)
-                        .set(ExchangeCode::getUserId, userId)
-                        .eq(ExchangeCode::getId, serialNum)
-                        .update();
-            }
-//            throw new BadRequestException("故意报错");
-//        }
+        Integer count = this.lambdaQuery()
+                .eq(UserCoupon::getUserId, userId)
+                .eq(UserCoupon::getCouponId, coupon.getId())
+                .count();
+        if (coupon != null && count >= coupon.getUserLimit()) {
+            throw new BadRequestException("已达到领取上限");
+        }
+        //2.优惠卷的已发放数量 + 1
+        couponMapper.incrIssueNum(coupon.getId());
+        //3.生成用户优惠卷
+        saveUserCoupon(userId, coupon);
+        //4.更新兑换码状态
+        if (serialNum != null) {
+            //修改兑换码的状态
+            exchangeCodeService.lambdaUpdate()
+                    .set(ExchangeCode::getStatus, ExchangeCodeStatus.USED)
+                    .set(ExchangeCode::getUserId, userId)
+                    .eq(ExchangeCode::getId, serialNum)
+                    .update();
+        }
     }
 
     @Override
