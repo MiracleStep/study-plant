@@ -95,7 +95,7 @@ public class UserCouponRedissonServiceImpl extends ServiceImpl<UserCouponMapper,
             if (!isLock) {
                 throw new BizIllegalException("操作太频繁了");
             }
-            //从aop上下文中 获取当前类的代理对象 代理对象中的
+            //从aop上下文中 获取当前类的代理对象 非事务方法调用事务方法需要事务支持，需要这一步
             IUserCouponService userCouponServiceProxy = (IUserCouponService) AopContext.currentProxy();
             userCouponServiceProxy.checkAndCreateUserCoupon(userId, coupon, null);
         } finally {

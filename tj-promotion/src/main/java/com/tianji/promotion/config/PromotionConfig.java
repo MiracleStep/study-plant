@@ -13,7 +13,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class PromotionConfig {
 
     /**
-     * 自定义线程池
+     * 自定义线程池 用于兑换码生成优惠卷
      * @return
      */
     @Bean
